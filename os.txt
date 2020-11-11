@@ -1,0 +1,160 @@
+#include<stdio.h>
+#include<conio.h>
+
+int quantum=50;
+
+struct process
+{
+    int a_time,burst_time,priority,finish_time,process_no,rem_burst_time,rem_q_time;
+    int ioblockinterval[10],extra_time,turn_around_time;
+    int wait_time,no_of_io,flag;
+
+};
+
+int n;
+
+struct chart
+{
+    int p_no,end_time;
+};
+
+void input(struct process p[])
+{
+    int i,j,n1;
+    printf("ENTER THE TOTAL NUMBER OF PROCESSES: ");
+    scanf("%d",&n);
+
+    for(i=1;i<=n;i++)
+    {
+        printf("\nENTER ARRIVIAL TIME OF PROCESS %d: ",i);
+        scanf("%d",&p[i].a_time);
+        printf("ENTER THE CPU BURST TIME OF PROCESS %d: ",i);
+        scanf("%d",&p[i].burst_time);
+        printf("ENTER THE PRIORITY OF PROCESS %d: ",i);
+        scanf("%d",&p[i].priority);
+        printf("HOW MANY I/O BLOCKS FOR PROCESS %d: ",i);
+        scanf("%d",&p[i].no_of_io);
+        printf("ENTER THE INTERVALS FOR I/O BLOCKS: ");
+        for(j=1;j<=p[i].no_of_io;j++)
+            scanf("%d",&p[i].ioblockinterval[j]);
+
+        p[i].rem_burst_time=p[i].burst_time;
+        p[i].extra_time=0;
+        p[i].rem_q_time=50;
+        p[i].flag=0;
+        p[i].process_no=i;
+    }
+    printf("ENTERED INFORMATION IS:\n");
+    printf("\nPROCESS NUMBER \t ARRIVAL TIME \t CPU BURST TIME \t PRIORITY");
+    for(i=1;i<=n;i++)
+        printf("\n%d \t\t %d \t\t %d \t\t\t %d",i,p[i].a_time,p[i].burst_time,p[i].priority);
+}
+
+int scheduling(struct process p[],struct chart c[])
+{
+    int i=1,check=0,j,time=0,s,m,l,count=0;
+    struct process *start,*queue[15];
+
+    while(check<n)
+    {
+        s=1;
+        for(m=1;m<=n;m++)
+        {
+            if(p[m].a_time<=time && p[m].rem_burst_time!=0)
+            {
+                queue[s]=&p[m];
+                s++;
+            }
+        }
+
+        start=queue[1];
+        for(j=1;j<s;j++)
+       if(queue[j]->priority>start->priority&&queue[j]->rem_burst_time!=0)    
+	start=queue[j];
+
+        while(1)
+        {
+for(l=1;l<=start->no_of_io;l++)
+              if(start->ioblockinterval[l]<(start->rem_q_time+start->extra_time)&&start-                                                          >ioblockinterval[l]>=start->extra_time)
+                    start->flag++;
+
+            if(start->rem_burst_time>start->rem_q_time)
+       {
+                start->rem_burst_time-=start->rem_q_time;
+                time=time+start->rem_q_time;
+                c[i].p_no=start->process_no;
+                c[i].end_time=time;
+                count++;
+                i++;
+            }
+            else
+            {
+                time=time+start->rem_burst_time;
+                start->rem_burst_time=0;
+                check++;
+                start->turn_around_time=time-start->a_time;
+                start->wait_time=start->turn_around_time-start->burst_time;
+                start->finish_time=time;
+                c[i].p_no=start->process_no;
+                c[i].end_time=time;
+                count++;
+                i++;
+                break;
+            }
+
+            start->extra_time+=start->rem_q_time;
+            if(start->flag==0&&start->rem_q_time<=100)
+            {
+                start->rem_q_time=10;
+                start->priority++;
+            }
+            else
+            {
+                start->rem_q_time=start->rem_q_time-((start->flag)*5);
+                start->flag=0;
+                break;
+            }
+        }
+    }
+    return count;
+}
+void calculate(struct process p[])
+{
+    int i;
+    float avg=0,wait=0;
+    for(i=1;i<=n;i++)
+    {
+        avg=avg+p[i].turn_around_time;
+        wait=wait+p[i].wait_time;
+    }
+    printf("\n\nAVERAGE TURN AROUND TIME IS: %f\n",avg/n);
+    printf("AVERAGE WAITING TIME IS: %f\n",wait/n);
+}
+void output(struct process p[],struct chart c[],int count)
+{
+    int i;
+    printf("\n\nGANTT CHART\n");
+    printf("|");
+    for(i=1;i<=count;i++)
+	    printf(" %-3d |",c[i].p_no);
+    printf("\n%d    ",0);
+    for(i=1;i<=count;i++)
+	    printf("%-3d   ",c[i].end_time);
+
+
+    printf("\n\nOUTPUT TABLE IS:\n");
+    printf("\nPROCESS NUMBER\tPRIORITY\tFINISH TIME\tTAT\tWAITING TIME");
+    for(i=1;i<=n;i++)
+        printf("\n%-14d\t%-8d\t%-11d\t%-3d\t%-12d",i,p[i].priority,p[i].finish_time,p[i].turn_around_time,p[i].wait_time);
+
+}
+int main()
+{
+    struct process p[15];
+    struct chart c[50];
+    int count;
+    input(p);
+    count=scheduling(p,c);
+    output(p,c,count);
+    calculate(p);
+}
